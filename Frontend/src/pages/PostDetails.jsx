@@ -169,9 +169,6 @@ const PostDetails = () => {
         <Button variant="text" onClick={() => window.history.back()} sx={{ textTransform: 'none' }}>
           ← Back
         </Button>
-        <Button variant="contained" color="primary" href="/" sx={{ borderRadius: 2 }}>
-          Home
-        </Button>
       </Box>
 
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} alignItems="flex-start">

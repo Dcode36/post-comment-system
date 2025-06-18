@@ -97,9 +97,10 @@ const Home = () => {
 
   return (
     <>
-      <Navbar />
+      
       <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}> {/* Increased margin-bottom */}
+      <Navbar />
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3} mt={3}> {/* Increased margin-bottom */}
           <Typography variant="h4" fontWeight="bold" color="text.primary"> {/* Emphasize color */}
             📝 Recent Posts
           </Typography>
@@ -180,17 +181,57 @@ const Home = () => {
                       </IconButton>
                     </Tooltip>
 
-                    <Tooltip title="View & Comment">
-                      <Button
-                        size="small"
-                        component={Link}
-                        to={`/post/${post._id}`}
-                        startIcon={<ForumIcon />}
-                        sx={{ textTransform: 'none' }} // Prevent uppercase
-                      >
-                        View & Comment
-                      </Button>
-                    </Tooltip>
+                    {
+                      user ? (
+                        <Tooltip title="View & Comment">
+                          <Button
+                            size="small"
+                            component={Link}
+                            to={`/post/${post._id}`}
+                            startIcon={<ForumIcon />}
+                            variant="outlined"
+                            sx={{
+                              textTransform: 'none',
+                              fontWeight: 500,
+                              borderRadius: 2,
+                              px: 2,
+                              py: 0.8,
+                              fontSize: '0.85rem',
+                              '&:hover': {
+                                bgcolor: 'primary.light',
+                                color: 'white',
+                              }
+                            }}
+                          >
+                            View & Comment
+                          </Button>
+                        </Tooltip>
+                      ) : (
+                        <Box
+                          sx={{
+                            border: '1px dashed',
+                            borderColor: 'grey.400',
+                            borderRadius: 2,
+                            px: 2,
+                            py: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            bgcolor: 'grey.100',
+                            color: 'text.secondary',
+                            fontSize: '0.85rem',
+                            mt: 1
+                          }}
+                        >
+                          <ForumIcon fontSize="small" />
+                          <Typography variant="body2" fontWeight={500}>
+                            Log in to view & comment
+                          </Typography>
+                        </Box>
+                      )
+                    }
+
+
                   </Stack>
                 </CardActions>
               </Card>
