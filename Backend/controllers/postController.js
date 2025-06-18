@@ -48,7 +48,7 @@ exports.getSinglePost = async (req, res) => {
 // Toggle like/unlike a post
 exports.toggleLike = async (req, res) => {
     const postId = req.params.id;
-    const userId = '6852988c5cb5a989743aac49';
+    const userId = req.user._id;
   
     try {
       const post = await Post.findById(postId);

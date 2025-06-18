@@ -8,6 +8,6 @@ const { toggleLike } = require('../controllers/postController');
 router.get('/', getAllPosts);
 router.get('/:id', getSinglePost);
 router.post('/', authMiddleware, createPost);
-router.post('/:id/like', toggleLike);
+router.post('/:id/like',authMiddleware, toggleLike);
 
 module.exports = router;
