@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import API from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import ReactQuill from 'react-quill';
@@ -30,6 +29,7 @@ import {
   Comment as CommentIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 
 const PostDetails = () => {
@@ -63,7 +63,7 @@ const PostDetails = () => {
 
   const fetchPost = async () => {
     try {
-      const res = await axios.get(`http://localhost:9000/api/posts/${id}`);
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/posts/${id}`);
       setPost(res.data);
       if (res.data?.createdBy._id === user._id) setIsAuthor(true);
       setLoading(false);
@@ -77,7 +77,7 @@ const PostDetails = () => {
     if (!comment.trim()) return;
     try {
       await axios.post(
-        `http://localhost:9000/api/comments`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/comments`,
         { postId: id, text: comment },
         {
           headers: {
@@ -97,7 +97,7 @@ const PostDetails = () => {
     if (!replyText.trim()) return;
     try {
       await axios.post(
-        `http://localhost:9000/api/comments/${commentId}/reply`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/comments/${commentId}/reply`,
         { text: replyText },
         {
           headers: {
@@ -126,9 +126,25 @@ const PostDetails = () => {
 
   if (loading) {
     return (
-      <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="60vh" sx={{ gap: 2 }}>
-        <CircularProgress size={60} thickness={4} />
-        <Typography variant="h6" color="text.secondary">Loading post...</Typography>
+      <Box 
+        sx={{
+          minHeight: '100vh',
+          backgroundColor: '#f8fafc',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 2
+        }}
+      >
+        <CircularProgress 
+          size={60} 
+          thickness={4} 
+          sx={{ color: '#1e293b' }}
+        />
+        <Typography variant="h6" sx={{ color: '#64748b' }}>
+          Loading post...
+        </Typography>
       </Box>
     );
   }
@@ -149,255 +165,464 @@ const PostDetails = () => {
   const mainComments = Object.values(groupedComments).filter(c => !c.isReply);
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 6 }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+      {/* Navigation */}
       <Box
         component="nav"
         sx={{
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
           px: 3,
           py: 2,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: 'background.paper',
+          backgroundColor: 'white',
+          borderBottom: '1px solid #e2e8f0',
           position: 'sticky',
           top: 0,
           zIndex: 1000,
         }}
       >
-        <Button variant="text" onClick={() => window.history.back()} sx={{ textTransform: 'none' }}>
-          ← Back
+        <Button 
+          variant="text" 
+          onClick={() => window.history.back()}
+          startIcon={<ArrowBackIcon />}
+          sx={{ 
+            textTransform: 'none',
+            color: '#64748b',
+            '&:hover': {
+              backgroundColor: '#f1f5f9',
+              color: '#1e293b'
+            }
+          }}
+        >
+          Back
         </Button>
       </Box>
 
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} alignItems="flex-start">
-        {/* Left: Post */}
-        <Box sx={{ flex: 1 }}>
-          <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
-            <CardContent sx={{ p: 4 }}>
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h3" component="h1" sx={{ fontWeight: 700, mb: 2, color: 'text.primary', lineHeight: 1.2 }}>
-                  {post.title}
-                </Typography>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={4} alignItems="flex-start">
+          {/* Left: Post */}
+          <Box sx={{ flex: 1 }}>
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                border: '1px solid #e2e8f0',
+                borderRadius: 2,
+                backgroundColor: 'white',
+                overflow: 'hidden'
+              }}
+            >
+              <CardContent sx={{ p: 4 }}>
+                <Box sx={{ mb: 4 }}>
+                  <Typography 
+                    variant="h4" 
+                    component="h1" 
+                    sx={{ 
+                      fontWeight: 700,
+                      mb: 3,
+                      color: '#1e293b',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {post.title}
+                  </Typography>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                  <Avatar sx={{ bgcolor: 'primary.main' }}>
-                    <PersonIcon />
-                  </Avatar>
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      {post.createdBy.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Author
-                    </Typography>
-                  </Box>
-                  {isAuthor && (
-                    <Chip label="Your Post" size="small" color="primary" variant="outlined" />
-                  )}
-                </Box>
-              </Box>
-
-              <Divider sx={{ mb: 3 }} />
-
-              <Box
-                sx={{
-                  '& p': { marginBottom: '1em' },
-                  fontSize: '1.1rem',
-                  lineHeight: 1.7,
-                  color: 'text.primary'
-                }}
-                dangerouslySetInnerHTML={{ __html: post.body }}
-              />
-            </CardContent>
-          </Card>
-        </Box>
-
-        {/* Right: Comments */}
-        <Box sx={{ flex: 1 }}>
-          <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
-            <CardContent sx={{ p: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-                <CommentIcon color="primary" />
-                <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                  Discussion
-                </Typography>
-                <Badge badgeContent={mainComments.length} color="primary" sx={{ ml: 1 }} />
-              </Box>
-
-              <Stack spacing={3} sx={{ mb: 4 }}>
-                {mainComments.length === 0 ? (
-                  <Box textAlign="center" py={6} color="text.secondary">
-                    <CommentIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
-                    <Typography variant="h6" mb={1}>No comments yet</Typography>
-                    <Typography variant="body2">Be the first to share your thoughts!</Typography>
-                  </Box>
-                ) : (
-                  mainComments.map((c) => (
-                    <Paper
-                      key={c._id}
-                      elevation={0}
-                      sx={{
-                        p: 3,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        borderRadius: 2,
-                        bgcolor: 'grey.50'
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                    <Avatar 
+                      sx={{ 
+                        bgcolor: '#1e293b',
+                        width: 40,
+                        height: 40
                       }}
                     >
-                      <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Avatar sx={{ bgcolor: 'secondary.main', width: 40, height: 40 }}>
-                          {(user && c.userId === user._id ? 'You' : c.userId.name).charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="subtitle2" fontWeight={600} mb={1}>
-                            {user && c.userId === user._id ? 'You' : c.userId.name}
-                          </Typography>
-                          <Box
-                            sx={{ '& p': { margin: 0 }, '& ul, & ol': { paddingLeft: 2 }, mb: 2 }}
-                            dangerouslySetInnerHTML={{ __html: c.text }}
-                          />
+                      {post.createdBy.name.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <Box>
+                      <Typography 
+                        variant="subtitle1" 
+                        sx={{ 
+                          fontWeight: 600,
+                          color: '#1e293b'
+                        }}
+                      >
+                        {post.createdBy.name}
+                      </Typography>
+                      <Typography 
+                        variant="caption" 
+                        sx={{ color: '#64748b' }}
+                      >
+                        Author
+                      </Typography>
+                    </Box>
+                    {isAuthor && (
+                      <Chip 
+                        label="Your Post" 
+                        size="small" 
+                        sx={{
+                          backgroundColor: '#f1f5f9',
+                          color: '#1e293b',
+                          border: '1px solid #e2e8f0',
+                          fontWeight: 500
+                        }}
+                      />
+                    )}
+                  </Box>
+                </Box>
 
-                          {c.replies?.length > 0 && (
-                            <Button
-                              startIcon={expandedReplies[c._id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                              onClick={() => toggleReplies(c._id)}
-                              size="small"
-                              sx={{ mb: 2 }}
+                <Divider sx={{ mb: 4, borderColor: '#e2e8f0' }} />
+
+                <Box
+                  sx={{
+                    '& p': { marginBottom: '1em' },
+                    fontSize: '1.1rem',
+                    lineHeight: 1.7,
+                    color: '#1e293b'
+                  }}
+                  dangerouslySetInnerHTML={{ __html: post.body }}
+                />
+              </CardContent>
+            </Paper>
+          </Box>
+
+          {/* Right: Comments */}
+          <Box sx={{ flex: 1 }}>
+            <Paper 
+              elevation={0} 
+              sx={{ 
+                border: '1px solid #e2e8f0',
+                borderRadius: 2,
+                backgroundColor: 'white'
+              }}
+            >
+              <CardContent sx={{ p: 4 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+                  <CommentIcon sx={{ color: '#1e293b' }} />
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      fontWeight: 600,
+                      color: '#1e293b'
+                    }}
+                  >
+                    Discussion
+                  </Typography>
+                  <Badge 
+                    badgeContent={mainComments.length} 
+                    sx={{
+                      '& .MuiBadge-badge': {
+                        backgroundColor: '#1e293b',
+                        color: 'white'
+                      }
+                    }}
+                  />
+                </Box>
+
+                <Stack spacing={3} sx={{ mb: 4 }}>
+                  {mainComments.length === 0 ? (
+                    <Box 
+                      sx={{
+                        textAlign: 'center',
+                        py: 6,
+                        color: '#64748b'
+                      }}
+                    >
+                      <CommentIcon sx={{ fontSize: 48, mb: 2, opacity: 0.5 }} />
+                      <Typography variant="h6" sx={{ mb: 1, color: '#1e293b' }}>
+                        No comments yet
+                      </Typography>
+                      <Typography variant="body2">
+                        Be the first to share your thoughts!
+                      </Typography>
+                    </Box>
+                  ) : (
+                    mainComments.map((c) => (
+                      <Paper
+                        key={c._id}
+                        elevation={0}
+                        sx={{
+                          p: 3,
+                          border: '1px solid #e2e8f0',
+                          borderRadius: 2,
+                          backgroundColor: '#fafafa'
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                          <Avatar 
+                            sx={{ 
+                              bgcolor: '#64748b',
+                              width: 40,
+                              height: 40,
+                              fontSize: '0.9rem'
+                            }}
+                          >
+                            {(user && c.userId === user._id ? 'You' : c.userId.name).charAt(0).toUpperCase()}
+                          </Avatar>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography 
+                              variant="subtitle2" 
+                              sx={{ 
+                                fontWeight: 600,
+                                mb: 1,
+                                color: '#1e293b'
+                              }}
                             >
-                              {c.replies.length} {c.replies.length === 1 ? 'Reply' : 'Replies'}
-                            </Button>
-                          )}
+                              {user && c.userId === user._id ? 'You' : c.userId.name}
+                            </Typography>
+                            <Box
+                              sx={{ 
+                                '& p': { margin: 0, color: '#1e293b' },
+                                '& ul, & ol': { paddingLeft: 2 },
+                                mb: 2
+                              }}
+                              dangerouslySetInnerHTML={{ __html: c.text }}
+                            />
 
-                          <Collapse in={expandedReplies[c._id] || c.replies?.length <= 2}>
                             {c.replies?.length > 0 && (
-                              <Box sx={{ pl: 3, borderLeft: '2px solid', borderColor: 'divider' }}>
-                                {c.replies.map((r) => (
-                                  <Box key={r._id} sx={{ mb: 2, display: 'flex', gap: 2 }}>
-                                    <Avatar sx={{ bgcolor: 'info.main', width: 32, height: 32 }}>
-                                      <ReplyIcon sx={{ fontSize: 16 }} />
-                                    </Avatar>
-                                    <Box sx={{ flex: 1 }}>
-                                      <Typography variant="body2" fontWeight={600} mb={0.5}>
-                                        {user && r.userId === user._id ? 'You' : r.userId.name}
-                                      </Typography>
-                                      <Box
-                                        sx={{ '& p': { margin: 0, fontSize: '0.9rem' }, '& ul, & ol': { paddingLeft: 2 } }}
-                                        dangerouslySetInnerHTML={{ __html: r.text }}
-                                      />
-                                    </Box>
-                                  </Box>
-                                ))}
-                              </Box>
-                            )}
-                          </Collapse>
-
-                          {isAuthor && (
-                            <>
                               <Button
-                                variant="text"
+                                startIcon={expandedReplies[c._id] ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                                onClick={() => toggleReplies(c._id)}
                                 size="small"
-                                startIcon={<ReplyIcon />}
-                                sx={{ mt: 1 }}
-                                onClick={() => setActiveReplyCommentId(c._id)}
+                                sx={{ 
+                                  mb: 2,
+                                  color: '#64748b',
+                                  textTransform: 'none',
+                                  '&:hover': {
+                                    backgroundColor: '#f1f5f9',
+                                    color: '#1e293b'
+                                  }
+                                }}
                               >
-                                Reply
+                                {c.replies.length} {c.replies.length === 1 ? 'Reply' : 'Replies'}
                               </Button>
+                            )}
 
-                              {activeReplyCommentId === c._id && (
-                                <Box mt={3} p={3} bgcolor="background.paper" borderRadius={2}>
-                                  <Typography variant="subtitle2" mb={2} display="flex" alignItems="center" gap={1}>
-                                    <ReplyIcon fontSize="small" />
-                                    Reply as Author
-                                  </Typography>
-                                  <ReactQuill
-                                    theme="snow"
-                                    value={reply[c._id] || ''}
-                                    onChange={(content) => setReply((prev) => ({ ...prev, [c._id]: content }))}
-                                    modules={modules}
-                                    formats={formats}
-                                    placeholder="Write your reply..."
-                                    style={{ marginBottom: '16px' }}
-                                  />
-                                  <Box display="flex" gap={2} justifyContent="flex-end">
-                                    <Button
-                                      variant="outlined"
-                                      onClick={() => {
-                                        setReply((prev) => ({ ...prev, [c._id]: '' }));
-                                        setActiveReplyCommentId(null);
-                                      }}
-                                      sx={{ borderRadius: 2 }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                    <Button
-                                      variant="contained"
-                                      startIcon={<ReplyIcon />}
-                                      onClick={() => {
-                                        handleReply(c._id, reply[c._id]);
-                                        setActiveReplyCommentId(null);
-                                      }}
-                                      disabled={!reply[c._id]?.trim()}
-                                      sx={{ borderRadius: 2 }}
-                                    >
-                                      Post Reply
-                                    </Button>
-                                  </Box>
+                            <Collapse in={expandedReplies[c._id] || c.replies?.length <= 2}>
+                              {c.replies?.length > 0 && (
+                                <Box sx={{ pl: 3, borderLeft: '2px solid #e2e8f0' }}>
+                                  {c.replies.map((r) => (
+                                    <Box key={r._id} sx={{ mb: 2, display: 'flex', gap: 2 }}>
+                                      <Avatar 
+                                        sx={{ 
+                                          bgcolor: '#94a3b8',
+                                          width: 32,
+                                          height: 32
+                                        }}
+                                      >
+                                        <ReplyIcon sx={{ fontSize: 16 }} />
+                                      </Avatar>
+                                      <Box sx={{ flex: 1 }}>
+                                        <Typography 
+                                          variant="body2" 
+                                          sx={{ 
+                                            fontWeight: 600,
+                                            mb: 0.5,
+                                            color: '#1e293b'
+                                          }}
+                                        >
+                                          {user && r.userId === user._id ? 'You' : r.userId.name}
+                                        </Typography>
+                                        <Box
+                                          sx={{ 
+                                            '& p': { margin: 0, fontSize: '0.9rem', color: '#1e293b' },
+                                            '& ul, & ol': { paddingLeft: 2 }
+                                          }}
+                                          dangerouslySetInnerHTML={{ __html: r.text }}
+                                        />
+                                      </Box>
+                                    </Box>
+                                  ))}
                                 </Box>
                               )}
-                            </>
-                          )}
+                            </Collapse>
+
+                            {isAuthor && (
+                              <>
+                                <Button
+                                  variant="text"
+                                  size="small"
+                                  startIcon={<ReplyIcon />}
+                                  sx={{ 
+                                    mt: 1,
+                                    color: '#64748b',
+                                    textTransform: 'none',
+                                    '&:hover': {
+                                      backgroundColor: '#f1f5f9',
+                                      color: '#1e293b'
+                                    }
+                                  }}
+                                  onClick={() => setActiveReplyCommentId(c._id)}
+                                >
+                                  Reply
+                                </Button>
+
+                                {activeReplyCommentId === c._id && (
+                                  <Box 
+                                    sx={{
+                                      mt: 3,
+                                      p: 3,
+                                      backgroundColor: 'white',
+                                      borderRadius: 2,
+                                      border: '1px solid #e2e8f0'
+                                    }}
+                                  >
+                                    <Typography 
+                                      variant="subtitle2" 
+                                      sx={{
+                                        mb: 2,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        color: '#1e293b',
+                                        fontWeight: 600
+                                      }}
+                                    >
+                                      <ReplyIcon fontSize="small" />
+                                      Reply as Author
+                                    </Typography>
+                                    <ReactQuill
+                                      theme="snow"
+                                      value={reply[c._id] || ''}
+                                      onChange={(content) => setReply((prev) => ({ ...prev, [c._id]: content }))}
+                                      modules={modules}
+                                      formats={formats}
+                                      placeholder="Write your reply..."
+                                      style={{ marginBottom: '16px' }}
+                                    />
+                                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                                      <Button
+                                        variant="outlined"
+                                        onClick={() => {
+                                          setReply((prev) => ({ ...prev, [c._id]: '' }));
+                                          setActiveReplyCommentId(null);
+                                        }}
+                                        sx={{ 
+                                          borderRadius: 1,
+                                          textTransform: 'none',
+                                          borderColor: '#e2e8f0',
+                                          color: '#64748b',
+                                          '&:hover': {
+                                            borderColor: '#1e293b',
+                                            color: '#1e293b'
+                                          }
+                                        }}
+                                      >
+                                        Cancel
+                                      </Button>
+                                      <Button
+                                        variant="contained"
+                                        startIcon={<ReplyIcon />}
+                                        onClick={() => {
+                                          handleReply(c._id, reply[c._id]);
+                                          setActiveReplyCommentId(null);
+                                        }}
+                                        disabled={!reply[c._id]?.trim()}
+                                        sx={{ 
+                                          borderRadius: 1,
+                                          backgroundColor: '#1e293b',
+                                          textTransform: 'none',
+                                          '&:hover': {
+                                            backgroundColor: '#334155'
+                                          }
+                                        }}
+                                      >
+                                        Post Reply
+                                      </Button>
+                                    </Box>
+                                  </Box>
+                                )}
+                              </>
+                            )}
+                          </Box>
                         </Box>
+                      </Paper>
+                    ))
+                  )}
+                </Stack>
+
+                <Divider sx={{ my: 4, borderColor: '#e2e8f0' }} />
+
+                {/* Add Comment */}
+                <Box>
+                  <Typography 
+                    variant="h6" 
+                    sx={{
+                      mb: 3,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      fontWeight: 600,
+                      color: '#1e293b'
+                    }}
+                  >
+                    <CommentIcon />
+                    Add Your Comment
+                  </Typography>
+                  <form onSubmit={handleComment}>
+                    <Paper 
+                      elevation={0} 
+                      sx={{
+                        p: 3,
+                        border: '2px solid #e2e8f0',
+                        borderRadius: 2,
+                        backgroundColor: '#fafafa',
+                        '&:focus-within': {
+                          borderColor: '#1e293b',
+                          backgroundColor: 'white'
+                        }
+                      }}
+                    >
+                      <ReactQuill
+                        theme="snow"
+                        value={comment}
+                        onChange={setComment}
+                        modules={modules}
+                        formats={formats}
+                        placeholder="Share your thoughts on this post..."
+                        style={{ marginBottom: '16px' }}
+                      />
+                      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+                        <Button 
+                          variant="outlined" 
+                          onClick={() => setComment('')} 
+                          disabled={!comment.trim()}
+                          sx={{ 
+                            borderRadius: 1,
+                            textTransform: 'none',
+                            borderColor: '#e2e8f0',
+                            color: '#64748b',
+                            '&:hover': {
+                              borderColor: '#1e293b',
+                              color: '#1e293b'
+                            }
+                          }}
+                        >
+                          Clear
+                        </Button>
+                        <Button 
+                          type="submit" 
+                          variant="contained" 
+                          disabled={!comment.trim()}
+                          sx={{ 
+                            borderRadius: 1,
+                            px: 4,
+                            backgroundColor: '#1e293b',
+                            textTransform: 'none',
+                            '&:hover': {
+                              backgroundColor: '#334155'
+                            }
+                          }}
+                        >
+                          Post Comment
+                        </Button>
                       </Box>
                     </Paper>
-                  ))
-                )}
-              </Stack>
-
-              <Divider sx={{ my: 4 }} />
-
-              {/* Add Comment */}
-              <Box>
-                <Typography variant="h6" mb={3} display="flex" alignItems="center" gap={1} fontWeight={600}>
-                  <CommentIcon />
-                  Add Your Comment
-                </Typography>
-                <form onSubmit={handleComment}>
-                  <Paper elevation={0} sx={{
-                    p: 3,
-                    border: '2px solid',
-                    borderColor: 'divider',
-                    borderRadius: 2,
-                    '&:focus-within': {
-                      borderColor: 'primary.main'
-                    }
-                  }}>
-                    <ReactQuill
-                      theme="snow"
-                      value={comment}
-                      onChange={setComment}
-                      modules={modules}
-                      formats={formats}
-                      placeholder="Share your thoughts on this post..."
-                      style={{ marginBottom: '16px' }}
-                    />
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-                      <Button variant="outlined" onClick={() => setComment('')} disabled={!comment.trim()} sx={{ borderRadius: 2 }}>
-                        Clear
-                      </Button>
-                      <Button type="submit" variant="contained" disabled={!comment.trim()} sx={{ borderRadius: 2, px: 4 }}>
-                        Post Comment
-                      </Button>
-                    </Box>
-                  </Paper>
-                </form>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-      </Stack>
-    </Container>
+                  </form>
+                </Box>
+              </CardContent>
+            </Paper>
+          </Box>
+        </Stack>
+      </Container>
+    </Box>
   );
 };
 
