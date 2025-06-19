@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.jsx';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import toast from 'react-hot-toast'
